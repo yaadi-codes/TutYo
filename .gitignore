@@ -12,3 +12,6 @@ yarn-error.log*
 
 # Optional: if using VSCode
 .vscode
+
+# Vercel
+.vercel

@@ -71,7 +71,7 @@
                             <input type="checkbox" id="rememberMe" name="rememberMe" value="rememberMe">                   
                             <p>Remember me</p>
                         </label>
-                        <a href="onclick='call some function to show reset password page'"><p>Forgot password?</p></a>
+                        <a href="/loginOrRegister/forgot_password"><p>Forgot password?</p></a>
                     </div> 
                     <button id="submitBtn" type="submit">Login</button>
                     <div class="divider">
@@ -79,8 +79,9 @@
                     </div>
                     <div id="socialMediaLogin">
                         <a href="/auth/google"><button type="button" class="OAuth-Icon" id="googleOAuthIcon"><img src="/Assets/Google-Icon.png" alt="googleLogin"></button></a>
-                        <a href="/auth/microsoft"><button type="button" class="OAuth-Icon" id="microsoftOAuthIcon"><img src="/Assets/Microsoft-Icon.png" alt="microsoftLogin"></button></a>
-                        <a href="/auth/apple"><button type="button" class="OAuth-Icon" id="appleOAuthIcon"><img src="/Assets/AppleLogos.png" alt="appleLogin"></button></a>
+                        <!-- Not able to gain the following credentials to set up these OAuth methods, disabled for now -->
+                        <a href="/auth/microsoft"><button type="button" class="OAuth-Icon" id="microsoftOAuthIcon" disabled><img src="/Assets/Microsoft-Icon.png" alt="microsoftLogin"></button></a>
+                        <a href="/auth/apple"><button type="button" class="OAuth-Icon" id="appleOAuthIcon" disabled><img src="/Assets/AppleLogos.png" alt="appleLogin"></button></a>
                     </div>
                 </section>
                 <section id="additonalOptions">

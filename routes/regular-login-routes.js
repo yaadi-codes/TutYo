@@ -1,35 +1,35 @@
 const routes = require('express').Router();
 const { getDb } = require('../databaseFiles/db');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 //Login or Registration routes
-routes.get('/loginOrRegister', (req, res)=>{
-    res.render('./pages/loginPage', {title : 'Login', stylesheets : ['loginPage.css']})
+routes.get('/loginOrRegister', (req, res) => {
+    res.render('./pages/loginPage', { title: 'Login', stylesheets: ['loginPage.css'] })
 });
- 
+
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-routes.post('/loginOrRegister', async (req, res)=>{
+routes.post('/loginOrRegister', async (req, res) => {
     const db = getDb();
     const collection = db.collection('login_data');
 
-    try{
+    try {
         const action = req.body.action; //This will be either 'login' or 'register'
 
-        switch(action.toLowerCase()){
+        switch (action.toLowerCase()) {
             case 'login':
                 return await handleLogin(req, res, collection);
 
             case 'register':
-                return await handleRegistration(req, res, collection) ;
-               
+                return await handleRegistration(req, res, collection);
+
             default:
                 return res.status(400).json({ result: 'fail', message: 'Invalid action type' });
         }
-    }catch(err){
+    } catch (err) {
         console.error('Error processing login or registration:', err);
-        return res.status(500).json({ result: 'fail', message: 'Internal server error' });  
+        return res.status(500).json({ result: 'fail', message: 'Internal server error' });
     }
 })
 
@@ -81,42 +81,42 @@ async function handleLogin(req, res, collection) {
     const password = req.body.password;
     const MAX_ATTEMPTS = 5;
 
-    const user = await collection.findOne({[identifierType]: identifier});
-    
-    if(!user) {
+    const user = await collection.findOne({ [identifierType]: identifier });
+
+    if (!user) {
         return res.status(404).json({ result: 'fail', message: 'User not found' });
     }
-    
+
     //check to see if user account is locked 
-    if(user.isLocked)return res.status(403).json({result: 'fail', message: 'Account is locked.'});
+    if (user.isLocked) return res.status(403).json({ result: 'fail', message: 'Account is locked.' });
 
     let loginAttempt = parseInt(user.failedLoginAttempt || 0);// Track failed attempts
 
     try {
         const ispasswordValid = await bcrypt.compare(password, user.password);
-            
+
         // Lock account if max attempts reached
-        if(!ispasswordValid){
-            if(loginAttempt >= MAX_ATTEMPTS){
-                await collection.updateOne({[identifierType]: identifier}, {$set: {isLocked: true}});
-                return res.status(403).json({result: 'fail', message: 'Account is locked.'});
+        if (!ispasswordValid) {
+            if (loginAttempt >= MAX_ATTEMPTS) {
+                await collection.updateOne({ [identifierType]: identifier }, { $set: { isLocked: true } });
+                return res.status(403).json({ result: 'fail', message: 'Account is locked.' });
             }
             // Increment failed attempts
             loginAttempt++;
             await collection.updateOne(
-                {[identifierType]: identifier},
-                {$set: {failedLoginAttempt: loginAttempt}}
+                { [identifierType]: identifier },
+                { $set: { failedLoginAttempt: loginAttempt } }
             );
 
             return res.status(401).json({ result: 'fail', message: 'Invalid password' });
         }
-        
+
         //Else password is valid: reset failed attempt counter
         loginAttempt = 0;
 
         await collection.updateOne(
-            {[identifierType]: identifier},
-            {$set: {failedLoginAttempt: loginAttempt}}
+            { [identifierType]: identifier },
+            { $set: { failedLoginAttempt: loginAttempt } }
         );
 
         const token = jwt.sign(
@@ -124,8 +124,8 @@ async function handleLogin(req, res, collection) {
                 id: user._id,
                 username: user.username,
                 firstName: user.firstName,
-                lastName: user.lastName,         
-                email: user.email                
+                lastName: user.lastName,
+                email: user.email
             },
             process.env.JWT_SECRET,
         )
@@ -137,7 +137,7 @@ async function handleLogin(req, res, collection) {
             user: {
                 id: user._id,
                 username: user.username,
-            }    
+            }
         });
     } catch (err) {
         console.error('Error comparing passwords:', err);
@@ -169,8 +169,8 @@ async function handleRegistration(req, res, collection) {
         .forEach(key => delete data[key]);
 
     const userExists = await collection
-        .findOne({ email:data.email.toLowerCase().trim()});
-    if(userExists) {
+        .findOne({ email: data.email.toLowerCase().trim() });
+    if (userExists) {
         return res.status(409).json(
             { result: 'fail', message: 'User already exists' }
         );
@@ -178,16 +178,16 @@ async function handleRegistration(req, res, collection) {
 
     data.loginType = 'regular'; // This is helpful for tracking login method
 
-    try{
+    try {
         const hashedPassword = await bcrypt.hash(registeredPassword, 12);
         data.password = hashedPassword; //Store the hashed password
         data.failedLoginAttempt = 0;
-    }catch(err){
-            console.error('Error hashing password:', err);
-            return res.status(500).json({ result: 'fail', message: 'Internal server error' });
+    } catch (err) {
+        console.error('Error hashing password:', err);
+        return res.status(500).json({ result: 'fail', message: 'Internal server error' });
     };
 
-    try{
+    try {
         const result = await collection.insertOne(data);
         return res.status(201).json({
             result: 'success',
@@ -198,7 +198,7 @@ async function handleRegistration(req, res, collection) {
                 id: result.insertedId
             }
         });
-    }catch(err){
+    } catch (err) {
         console.error('Error inserting user into database:', err);
         return res.status(500).json({ result: 'fail', message: 'Internal server error' });
     }

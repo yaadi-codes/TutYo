@@ -429,7 +429,7 @@ form.addEventListener("submit", async (e) => {
  * UI is shown to the user.
  */
 if (window.location.pathname === '/loginOrRegister'){
- window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', () => {
 
      // Handle failed or successful OAuth logins (e.g., Google, Microsoft, Apple)
     updateLoginSession(false);

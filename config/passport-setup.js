@@ -1,6 +1,4 @@
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const bcrypt = require('bcrypt');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config();
 const { getDb } = require('../databaseFiles/db'); 
@@ -99,27 +97,5 @@ passport.use(new AppleStrategy(
     })
 ); */
 
-passport.use(new LocalStrategy(
-    {
-        usernameField: 'userOrEmail',
-        passwordField: 'password',
-    },
-    async(username, password, done) =>{
-        try {
-            const db = getDb();
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-            const identifierType = emailPattern.test(username) ? 'email' : 'username';
-            
-            const user = await collection.findOne({ [identifierType]: username.toLowerCase().trim() });
-            
-            if(!user) {
-                return done({ result: 'fail', message: 'User not found' });
-            }
-        } catch (error) {
-            
-        }
-    }
-))
 
 

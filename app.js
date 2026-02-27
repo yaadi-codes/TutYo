@@ -1,6 +1,6 @@
 const express = require('express');
+const path = require('path');
 const app = express();
-const morgan = require('morgan');
 const passportSetup = require('./config/passport-setup'); // Loads Passport strategies
 const authRoutes = require('./routes/auth-routes');
 const loginAndRegisterRoutes = require('./routes/regular-login-routes');
@@ -8,42 +8,21 @@ const session = require('express-session');
 const { connectToDb, getDb, closeConnection } = require('./databaseFiles/db');
 const passport = require('passport');
 
+require('dotenv').config(); // Load environment variables
 
-require('dotenv').config();// Load environment variables
-
-/**
- * App attempts to connect to the database first thing.
- * If successful, the app starts listening for HTTP requests.
- * The DB instance is stored in the `db` variable for shared use.
- */
-let db;
-(async () => {
-    try {
-        await connectToDb();
-        db = getDb();
-
-        app.listen(process.env.PORT || 3000, () => {
-            console.log(`Server is running on port ${process.env.PORT || 3000}`);
-        });
-
-    }catch (err) {
-        console.error('Failed to connect to the database', err);
-        process.exit(1); // Exit if DB fails to connect
-    }
-})();
-
+// Set the views directory explicitly (needed for Vercel serverless)
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs'); // EJS template engine
 
 // Middleware setup
 app.use(express.json());
-app.use(express.static('public'));
-app.use(morgan('dev'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Session middleware (required for passport session handling)
 app.use(session({
     secret: process.env.COOKIE_KEY, // Secret for signing session ID
-    resave: false,                  // Don’t save session if unmodified
-    saveUninitialized: false,       // Don’t create session until something is stored
+    resave: false,                  // Don't save session if unmodified
+    saveUninitialized: false,       // Don't create session until something is stored
     cookie: {
         maxAge: 24 * 3600 * 1000,   // 1 day
         secure: false               // ! Set to true if it goes to production with HTTPS
@@ -53,6 +32,21 @@ app.use(session({
 // Initialize Passport for authentication
 app.use(passport.initialize());
 app.use(passport.session());
+
+// DB connection middleware — ensures DB is connected for each request (serverless-safe)
+let db;
+app.use(async (req, res, next) => {
+    try {
+        if (!db) {
+            await connectToDb();
+            db = getDb();
+        }
+        next();
+    } catch (err) {
+        console.error('DB connection error in middleware:', err);
+        res.status(500).send('Database connection failed');
+    }
+});
 
 // Route handlers
 app.use('/auth', authRoutes);                  // Google OAuth and future providers
@@ -67,17 +61,35 @@ app.get('/', (req, res) => {
     });
 });
 
-// Redirects to dashboard (can be useful after login success)
+
 app.get('/loggedIn', (req, res) => {
     res.redirect('/dashboard');
 });
 
-app.get('/dashboard', ensureAuth, (req, res) => {
-  res.render('./pages/Dashboard', {
-    title: 'Dashboard',
-    stylesheets: []
-  });
+app.get('/dashboard', (req, res) => {
+    res.render('./pages/Dashboard', {
+        title: 'Dashboard',
+        stylesheets: []
+    });
 });
+
+// Only listen locally — Vercel handles this in production
+if (!process.env.VERCEL) {
+    (async () => {
+        try {
+            await connectToDb();
+            db = getDb();
+
+            app.listen(process.env.PORT || 3000, () => {
+                console.log(`Server is running on port ${process.env.PORT || 3000}`);
+            });
+
+        } catch (err) {
+            console.error('Failed to connect to the database', err);
+            process.exit(1);
+        }
+    })();
+}
 
 process.on('SIGINT', async () => {
     console.log('\nSIGINT received, closing DB connection...');
@@ -91,10 +103,5 @@ process.on('SIGTERM', async () => {
     process.exit(0);
 });
 
-function ensureAuth(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next(); // ✅ User is authenticated — allow access
-  }
-  // ❌ User not authenticated — redirect or send error
-  res.redirect('/loginOrRegister');
-}
+// Export the app for Vercel serverless function
+module.exports = app;
