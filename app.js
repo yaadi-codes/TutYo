@@ -74,26 +74,6 @@ app.get('/dashboard', (req, res) => {
     });
 });
 
-// Temporary diagnostic route — remove after debugging
-app.get('/debug-health', (req, res) => {
-    res.json({
-        status: 'ok',
-        env: {
-            hasDbUser: !!process.env.DB_USER,
-            hasDbPass: !!process.env.DB_PASS,
-            hasCookieKey: !!process.env.COOKIE_KEY,
-            hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
-            hasGoogleSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-            hasGoogleCbUrl: !!process.env.GOOGLE_CB_URL,
-            hasJwtSecret: !!process.env.JWT_SECRET,
-            isVercel: !!process.env.VERCEL,
-        },
-        dbConnected: !!db,
-        viewsDir: path.join(__dirname, 'views'),
-        nodeVersion: process.version,
-    });
-});
-
 // Catch-all error handler — shows actual error instead of generic "Internal Server Error"
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
