@@ -71,6 +71,14 @@ app.get('/dashboard', (req, res) => {
     });
 });
 
+// 404 catch-all — must be after all other routes
+app.use((req, res) => {
+    res.status(404).render('./pages/404', {
+        title: '404',
+        stylesheets: ['404.css']
+    });
+});
+
 // Catch-all error handler — shows actual error instead of generic "Internal Server Error"
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
