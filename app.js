@@ -54,12 +54,9 @@ app.use('/auth', authRoutes);                  // Google OAuth and future provid
 app.use(loginAndRegisterRoutes);               // Login/register routes for local users
 
 
-// Placeholder index page
+// Default page — redirect to login
 app.get('/', (req, res) => {
-    res.render('./pages/index', {
-        title: 'Home',
-        stylesheets: ['index.css']
-    });
+    res.redirect('/loginOrRegister');
 });
 
 

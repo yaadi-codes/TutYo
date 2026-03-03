@@ -9,7 +9,8 @@
                     "views/**",
                     "public/**",
                     "config/**",
-                    "databaseFiles/**"
+                    "databaseFiles/**",
+                    "utils/**"
                 ]
             }
         }
