@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer');
-require('dotenv').config();
 
 /**
  * Creates a reusable Nodemailer transport using Gmail SMTP.

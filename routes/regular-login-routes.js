@@ -6,6 +6,7 @@ const { sendResetEmail } = require('../utils/email');
 
 //Login or Registration routes
 routes.get('/loginOrRegister', (req, res) => {
+    res.render('./pages/loginPage', { title: 'Login', stylesheets: ['loginPage.css'] });
 });
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -360,4 +361,3 @@ async function handleRegistration(req, res, collection) {
     }
 };
 module.exports = routes;
-
